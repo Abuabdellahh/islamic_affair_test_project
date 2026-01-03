@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE = 'http://localhost:3001';
 
 export interface User {
   id: string;
@@ -27,7 +27,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || 'Request failed');
+      throw new Error(error.message || `HTTP ${response.status}`);
     }
 
     return response.json();
