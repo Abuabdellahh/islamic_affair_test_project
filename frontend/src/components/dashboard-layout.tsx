@@ -26,14 +26,14 @@ export function DashboardLayout({ user, children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Sidebar user={user} />
       <div className="lg:pl-64">
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 lg:px-8">
+        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-primary-foreground">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-white">
                   {user.email.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -42,7 +42,12 @@ export function DashboardLayout({ user, children }: DashboardLayoutProps) {
                 <p className="text-xs text-gray-500 capitalize">{user.role}</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout}
+              className="border-gray-300 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:border-red-300"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
