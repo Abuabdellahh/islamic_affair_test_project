@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api, type User } from '@/lib/api'
-import { Button } from '@/components/ui/button'
+import { DashboardLayout } from '@/components/dashboard-layout'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function HomePage() {
   const [user, setUser] = useState<User | null>(null)
@@ -25,19 +26,10 @@ export default function HomePage() {
     checkAuth()
   }, [router])
 
-  const handleLogout = async () => {
-    try {
-      await api.logout()
-      router.push('/login')
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-lg text-gray-600">Loading...</div>
       </div>
     )
   }
@@ -47,44 +39,70 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold">Dashboard</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
-                {user.email} ({user.role})
-              </span>
-              <Button variant="ghost" onClick={handleLogout}>
-                Logout
-              </Button>
-            </div>
-          </div>
+    <DashboardLayout user={user}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
+          <p className="text-gray-600 mt-2">Here's what's happening with your account today.</p>
         </div>
-      </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Welcome, {user.email}!
-              </h2>
-              <p className="text-gray-600 mb-4">
-                You are logged in as: <span className="font-semibold">{user.role}</span>
-              </p>
-              {user.role === 'admin' && (
-                <Button onClick={() => router.push('/admin')}>
-                  Admin Panel
-                </Button>
-              )}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-gray-600">Account Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">Active</div>
+              <p className="text-sm text-gray-600 mt-1">Your account is in good standing</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-gray-600">Role</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold capitalize">{user.role}</div>
+              <p className="text-sm text-gray-600 mt-1">Current access level</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-gray-600">Member Since</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{new Date(user.createdAt).toLocaleDateString()}</div>
+              <p className="text-sm text-gray-600 mt-1">Account creation date</p>
+            </CardContent>
+          </Card>
         </div>
-      </main>
-    </div>
+
+        {user.role === 'admin' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Admin Quick Actions</CardTitle>
+              <CardDescription>Manage your system from here</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Manage Users
+                </button>
+                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                  View Reports
+                </button>
+                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                  System Settings
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </DashboardLayout>
   )
 }

@@ -1,0 +1,125 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { api, type User } from '@/lib/api'
+import { Button } from '@/components/ui/button'
+import { Menu, X, Home, Users, LogOut, Settings } from 'lucide-react'
+
+interface SidebarProps {
+  user: User
+}
+
+export function Sidebar({ user }: SidebarProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const handleLogout = async () => {
+    try {
+      await api.logout()
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
+
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: Home },
+    ...(user.role === 'admin' ? [{ name: 'Users', href: '/admin', icon: Users }] : []),
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ]
+
+  return (
+    <>
+      {/* Mobile menu button */}
+      <div className="lg:hidden fixed top-4 left-4 z-50">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsOpen(!isOpen)}
+          className="bg-white shadow-md"
+        >
+          {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+            <div className="lg:hidden">
+              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* User info */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-primary-foreground">
+                  {user.email.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-2">
+            {navigation.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => {
+                    router.push(item.href)
+                    setIsOpen(false)
+                  }}
+                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </button>
+              )
+            })}
+          </nav>
+
+          {/* Logout */}
+          <div className="p-4 border-t border-gray-200">
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="w-full justify-start text-gray-700 hover:bg-gray-100"
+            >
+              <LogOut className="h-4 w-4 mr-3" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </>
+  )
+}
