@@ -16,53 +16,57 @@ export class AuthController {
   ) {}
 
   @Post('auth/register')
-  async register(@Body() dto: RegisterDto, @Req() req: Request) {
+  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) response: Response) {
     const user = await this.authService.register(dto.email, dto.password);
-    req.session.userId = user.id;
+    const { sessionId } = await this.authService.login(dto.email, dto.password);
+
+    response.cookie('sessionId', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
     
     return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt
+      message: 'User registered successfully',
+      user: { id: user.id, email: user.email, role: user.role }
     };
   }
 
   @Post('auth/login')
-  async login(@Body() dto: LoginDto, @Req() req: Request) {
-    const user = await this.authService.login(dto.email, dto.password);
-    req.session.userId = user.id;
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: Response) {
+    const { user, sessionId } = await this.authService.login(dto.email, dto.password);
+
+    response.cookie('sessionId', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
     
     return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt
+      message: 'Login successful',
+      user: { id: user.id, email: user.email, role: user.role }
     };
   }
 
   @Post('auth/logout')
   @UseGuards(AuthGuard)
-  async logout(@Req() req: Request, @Res() res: Response) {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Logout failed' });
-      }
-      res.clearCookie('connect.sid');
-      res.json({ message: 'Logged out successfully' });
-    });
+  async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    const sessionId = request.cookies?.sessionId;
+    if (sessionId) {
+      await this.authService.logout(sessionId);
+    }
+
+    response.clearCookie('sessionId');
+    return { message: 'Logout successful' };
   }
 
   @Get('me')
   @UseGuards(AuthGuard)
-  async getCurrentUser(@Req() req: Request) {
-    const user = await this.authService.getCurrentUser(req.session.userId);
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt
-    };
+  async getCurrentUser(@Req() request: Request) {
+    const user = request.user;
+    return { id: user.id, email: user.email, role: user.role };
   }
 
   @Get('admin/users')
@@ -76,12 +80,6 @@ export class AuthController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   async updateUserRole(@Param('id') id: string, @Body('role') role: UserRole) {
-    const user = await this.usersService.updateRole(id, role);
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt
-    };
+    return this.usersService.updateRole(id, role);
   }
 }

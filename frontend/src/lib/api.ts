@@ -4,14 +4,15 @@ export interface User {
   id: string;
   email: string;
   role: 'user' | 'admin';
-  createdAt: string;
 }
 
 export interface AuthResponse {
-  id: string;
-  email: string;
-  role: 'user' | 'admin';
-  createdAt: string;
+  message: string;
+  user: {
+    id: string;
+    email: string;
+    role: 'user' | 'admin';
+  };
 }
 
 class ApiClient {

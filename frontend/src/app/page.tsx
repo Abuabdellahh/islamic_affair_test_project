@@ -1,35 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
-import { api, type User } from '@/lib/api'
+import { useEffect } from 'react'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Users, Shield, Settings } from 'lucide-react'
 
 export default function HomePage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const currentUser = await api.getCurrentUser()
-        setUser(currentUser)
-      } catch {
-        router.push('/login')
-      } finally {
-        setLoading(false)
-      }
+    if (!loading && !user) {
+      router.push('/login')
     }
-
-    checkAuth()
-  }, [router])
+  }, [user, loading, router])
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-lg text-gray-600">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading...</div>
       </div>
     )
   }
@@ -42,66 +34,105 @@ export default function HomePage() {
     <DashboardLayout user={user}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
-          <p className="text-gray-600 mt-2">Here's what's happening with your account today.</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome, {user.email}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Session-Based Authentication System with RBAC
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600">Account Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">Active</div>
-              <p className="text-sm text-gray-600 mt-1">Your account is in good standing</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600">Role</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Your Role</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold capitalize">{user.role}</div>
-              <p className="text-sm text-gray-600 mt-1">Current access level</p>
+              <p className="text-xs text-muted-foreground">
+                {user.role === 'admin' ? 'Full system access' : 'Limited access'}
+              </p>
             </CardContent>
           </Card>
 
+          {user.role === 'admin' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">User Management</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">Admin Panel</div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Manage user roles and permissions
+                </p>
+                <Button 
+                  size="sm" 
+                  onClick={() => router.push('/admin')}
+                  className="w-full"
+                >
+                  Manage Users
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600">Member Since</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Settings</CardTitle>
+              <Settings className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{new Date(user.createdAt).toLocaleDateString()}</div>
-              <p className="text-sm text-gray-600 mt-1">Account creation date</p>
+              <div className="text-2xl font-bold">Profile</div>
+              <p className="text-xs text-muted-foreground mb-3">
+                View your account settings
+              </p>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => router.push('/settings')}
+                className="w-full"
+              >
+                View Settings
+              </Button>
             </CardContent>
           </Card>
         </div>
 
-        {user.role === 'admin' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Admin Quick Actions</CardTitle>
-              <CardDescription>Manage your system from here</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={() => router.push('/admin')}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  Manage Users
-                </button>
-                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                  View Reports
-                </button>
-                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                  System Settings
-                </button>
+        <Card>
+          <CardHeader>
+            <CardTitle>System Features</CardTitle>
+            <CardDescription>
+              This system demonstrates session-based authentication with role-based access control
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <h4 className="font-semibold text-green-600">✓ Implemented Features</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Session-based authentication (no JWT)</li>
+                  <li>• HTTP-only cookies</li>
+                  <li>• BCrypt password hashing</li>
+                  <li>• Role-based access control</li>
+                  <li>• Protected routes</li>
+                  <li>• Admin user management</li>
+                </ul>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div className="space-y-2">
+                <h4 className="font-semibold text-orange-600">⚠ Known Limitations</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• No refresh tokens</li>
+                  <li>• No rate limiting</li>
+                  <li>• Single session per user</li>
+                  <li>• Two-role RBAC only</li>
+                  <li>• In-memory sessions (dev only)</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   )

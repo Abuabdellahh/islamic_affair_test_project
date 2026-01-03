@@ -1,8 +1,9 @@
 import './globals.css'
+import { AuthProvider } from '@/lib/auth'
 
 export const metadata = {
-  title: 'Authentication System',
-  description: 'Session-based authentication with RBAC',
+  title: 'Session-Based Authentication System',
+  description: 'Session-based authentication with RBAC using NestJS and Next.js',
 }
 
 export default function RootLayout({
@@ -12,7 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }

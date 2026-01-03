@@ -4,7 +4,8 @@ import { Sidebar } from '@/components/sidebar'
 import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { api, type User } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
+import { type User } from '@/lib/api'
 
 interface DashboardLayoutProps {
   user: User
@@ -13,10 +14,11 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ user, children }: DashboardLayoutProps) {
   const router = useRouter()
+  const { logout } = useAuth()
 
   const handleLogout = async () => {
     try {
-      await api.logout()
+      await logout()
       router.push('/login')
     } catch (error) {
       console.error('Logout failed:', error)

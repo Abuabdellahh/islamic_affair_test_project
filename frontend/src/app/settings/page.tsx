@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
-import { api, type User } from '@/lib/api'
+import { useEffect } from 'react'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,24 +10,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export default function SettingsPage() {
+  const { user, loading } = useAuth()
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const currentUser = await api.getCurrentUser()
-        setUser(currentUser)
-      } catch {
-        router.push('/login')
-      } finally {
-        setLoading(false)
-      }
+    if (!loading && !user) {
+      router.push('/login')
     }
-
-    checkAuth()
-  }, [router])
+  }, [user, loading, router])
 
   if (loading) {
     return (
@@ -65,35 +55,51 @@ export default function SettingsPage() {
                 <Input id="role" value={user.role} disabled className="mt-1 capitalize" />
               </div>
               <div>
-                <Label htmlFor="created">Member Since</Label>
-                <Input 
-                  id="created" 
-                  value={new Date(user.createdAt).toLocaleDateString()} 
-                  disabled 
-                  className="mt-1" 
-                />
+                <Label htmlFor="userId">User ID</Label>
+                <Input id="userId" value={user.id} disabled className="mt-1" />
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Security</CardTitle>
-              <CardDescription>Manage your account security</CardDescription>
+              <CardTitle>Security Features</CardTitle>
+              <CardDescription>Current security implementations</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full">
-                Change Password
-              </Button>
-              <Button variant="outline" className="w-full">
-                Two-Factor Authentication
-              </Button>
-              <Button variant="outline" className="w-full">
-                Active Sessions
-              </Button>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-green-600">✓ Active Security</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• HTTP-only session cookies</li>
+                  <li>• BCrypt password hashing</li>
+                  <li>• Same-site cookie protection</li>
+                  <li>• Role-based access control</li>
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-orange-600">⚠ Limitations</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• No password change feature</li>
+                  <li>• No 2FA implementation</li>
+                  <li>• Single session per user</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Session Information</CardTitle>
+            <CardDescription>Current session details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-gray-600">
+              <p>You are currently logged in with session-based authentication.</p>
+              <p className="mt-2">Session cookies are HTTP-only and secure.</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   )

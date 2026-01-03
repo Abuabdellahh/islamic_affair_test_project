@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
+// @ts-ignore - Docker container has Next.js types
 import { useRouter } from 'next/navigation'
-import { api } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function LoginPage() {
   const router = useRouter()
+  const { user, login } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -17,28 +19,33 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await api.getCurrentUser()
-        router.push('/')
-      } catch {
-        // User not authenticated, stay on login page
-      }
+    if (user) {
+      router.push('/')
     }
+  }, [user, router])
 
-    checkAuth()
-  }, [router])
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
       if (isLogin) {
-        await api.login(email, password)
+        await login(email, password)
       } else {
-        await api.register(email, password)
+        const response = await fetch('http://localhost:3001/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password }),
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.message)
+        }
+        
+        await login(email, password)
       }
       router.push('/')
     } catch (err) {
@@ -71,7 +78,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -82,7 +89,7 @@ export default function LoginPage() {
                 type="password"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 required
                 minLength={6}
               />
