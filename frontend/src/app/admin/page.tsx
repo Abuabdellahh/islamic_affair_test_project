@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { api, type User } from '@/lib/api'
+import { DashboardLayout } from '@/components/dashboard-layout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -48,19 +50,10 @@ export default function AdminPage() {
     }
   }
 
-  const handleLogout = async () => {
-    try {
-      await api.logout()
-      router.push('/login')
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-lg text-gray-600">Loading...</div>
       </div>
     )
   }
@@ -70,77 +63,65 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => router.push('/')}>
-                ← Back to Dashboard
-              </Button>
-              <h1 className="text-xl font-semibold">Admin Panel</h1>
-            </div>
-            <div className="flex items-center">
-              <Button variant="ghost" onClick={handleLogout}>
-                Logout
-              </Button>
-            </div>
-          </div>
+    <DashboardLayout user={currentUser}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-600 mt-2">Manage user roles and permissions</p>
         </div>
-      </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
-                Manage user roles and permissions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {users.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
+        <Card>
+          <CardHeader>
+            <CardTitle>All Users</CardTitle>
+            <CardDescription>
+              {users.length} total users in the system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {users.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary-foreground">
+                        {user.email.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                     <div>
-                      <p className="font-medium">{user.email}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Created: {new Date(user.createdAt).toLocaleDateString()}
+                      <p className="font-medium text-gray-900">{user.email}</p>
+                      <p className="text-sm text-gray-500">
+                        Joined {new Date(user.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        user.role === 'admin' 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-secondary text-secondary-foreground'
-                      }`}>
-                        {user.role}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRoleChange(
-                          user.id, 
-                          user.role === 'admin' ? 'user' : 'admin'
-                        )}
-                        disabled={updateLoading === user.id}
-                      >
-                        {updateLoading === user.id 
-                          ? 'Updating...' 
-                          : `Make ${user.role === 'admin' ? 'User' : 'Admin'}`
-                        }
-                      </Button>
-                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
+                  <div className="flex items-center space-x-3">
+                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                      {user.role}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRoleChange(
+                        user.id, 
+                        user.role === 'admin' ? 'user' : 'admin'
+                      )}
+                      disabled={updateLoading === user.id}
+                    >
+                      {updateLoading === user.id 
+                        ? 'Updating...' 
+                        : `Make ${user.role === 'admin' ? 'User' : 'Admin'}`
+                      }
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
   )
 }
